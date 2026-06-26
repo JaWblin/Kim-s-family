@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>가족 일정 달력</title>
+  <title>우리 가족 달력 📅</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
@@ -13,6 +13,7 @@
 <body class="bg-slate-50 min-h-screen p-2 sm:p-4 flex justify-center">
   
   <div class="w-full max-w-md bg-white rounded-3xl shadow-md p-4 sm:p-5 mt-2">
+    
     <div class="flex justify-between items-center mb-6">
       <button onclick="changeMonth(-1)" class="p-3 bg-slate-100 rounded-xl hover:bg-slate-200 text-2xl font-bold transition">◀</button>
       <h2 id="month-year" class="text-2xl sm:text-3xl font-black text-slate-800">로딩 중...</h2>
@@ -23,11 +24,12 @@
       <div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
     </div>
 
-    <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 text-center"></div>
+    <div id="calendar-grid" class="grid grid-cols-7 gap-2 text-center"></div>
   </div>
 
   <div id="modal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-3xl w-full max-w-sm p-6 relative shadow-2xl">
+      
       <button onclick="closeModal()" class="absolute top-3 right-4 text-slate-400 hover:text-slate-700 text-4xl font-bold px-2">&times;</button>
       
       <div class="flex items-center justify-between border-b pb-3 mb-5 pr-8">
@@ -37,13 +39,13 @@
       </div>
 
       <div id="view-mode" class="space-y-4">
-        <div class="bg-amber-50 p-4 rounded-xl border border-amber-100">
-          <span class="text-base font-bold text-amber-800 block mb-1">☀️ 주간 담당</span>
-          <p id="view-day" class="text-2xl text-slate-800 font-black whitespace-pre-wrap">-</p>
+        <div id="view-day-box" class="p-4 rounded-xl border">
+          <span class="text-base font-bold block mb-1">☀️ 주간 담당</span>
+          <p id="view-day" class="text-2xl font-black whitespace-pre-wrap">-</p>
         </div>
-        <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-          <span class="text-base font-bold text-indigo-800 block mb-1">🌙 야간 담당</span>
-          <p id="view-night" class="text-2xl text-slate-800 font-black whitespace-pre-wrap">-</p>
+        <div id="view-night-box" class="p-4 rounded-xl border">
+          <span class="text-base font-bold block mb-1">🌙 야간 담당</span>
+          <p id="view-night" class="text-2xl font-black whitespace-pre-wrap">-</p>
         </div>
         <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
           <span class="text-base font-bold text-slate-700 block mb-1">📢 가족 전달사항</span>
@@ -56,16 +58,26 @@
 
       <div id="edit-mode" class="hidden space-y-4">
         <div>
-          <label class="block text-base font-bold text-amber-800 mb-1">☀️ 주간 담당</label>
-          <input type="text" id="edit-day" class="w-full p-3 border-2 border-slate-200 rounded-xl text-xl font-bold focus:outline-none focus:border-amber-400">
+          <label class="block text-base font-bold text-amber-800 mb-1">☀️ 주간 담당 선택</label>
+          <select id="edit-day" class="w-full p-3 border-2 border-slate-200 rounded-xl text-xl font-bold bg-white focus:outline-none focus:border-amber-400">
+            <option value="">선택 없음</option>
+            <option value="조여사">조여사</option>
+            <option value="흥기">흥기</option>
+            <option value="환기">환기</option>
+          </select>
         </div>
         <div>
-          <label class="block text-base font-bold text-indigo-800 mb-1">🌙 야간 담당</label>
-          <input type="text" id="edit-night" class="w-full p-3 border-2 border-slate-200 rounded-xl text-xl font-bold focus:outline-none focus:border-indigo-400">
+          <label class="block text-base font-bold text-indigo-800 mb-1">🌙 야간 담당 선택</label>
+          <select id="edit-night" class="w-full p-3 border-2 border-slate-200 rounded-xl text-xl font-bold bg-white focus:outline-none focus:border-indigo-400">
+            <option value="">선택 없음</option>
+            <option value="조여사">조여사</option>
+            <option value="흥기">흥기</option>
+            <option value="환기">환기</option>
+          </select>
         </div>
         <div>
-          <label class="block text-base font-bold text-slate-700 mb-1">📢 전달사항</label>
-          <textarea id="edit-notes" rows="3" class="w-full p-3 border-2 border-slate-200 rounded-xl text-xl font-bold focus:outline-none focus:border-blue-400"></textarea>
+          <label class="block text-base font-bold text-slate-700 mb-1">📢 전달사항 입력</label>
+          <textarea id="edit-notes" rows="3" class="w-full p-3 border-2 border-slate-200 rounded-xl text-xl font-bold focus:outline-none focus:border-blue-400" placeholder="메모를 입력해 주세요."></textarea>
         </div>
         <div class="flex space-x-2 pt-2">
           <button onclick="cancelEdit()" class="w-1/3 bg-slate-200 active:bg-slate-300 text-slate-700 font-black py-4 rounded-xl text-lg">취소</button>
@@ -85,11 +97,18 @@
     let selectedDateStr = "";
     const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
 
+    // 사람별 고유 컬러 에셋 정의 (가독성 향상용 파스텔톤 컬러셋)
+    const userStyles = {
+      '조여사': { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', tagBg: 'bg-emerald-100' },
+      '흥기': { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', tagBg: 'bg-orange-100' },
+      '환기': { bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-sky-200', tagBg: 'bg-sky-100' }
+    };
+    const defaultStyle = { bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-100', tagBg: 'bg-slate-100' };
+
     window.onload = function() {
       fetchDataAndRender();
     };
 
-    // GET 방식으로 데이터를 안전하게 읽어옴
     function fetchDataAndRender() {
       document.getElementById('month-year').innerText = "불러오는 중...";
       fetch(`${APPS_SCRIPT_URL}?action=read`)
@@ -102,6 +121,11 @@
           console.error("로드 실패:", error);
           document.getElementById('month-year').innerText = "오류 발생";
         });
+    }
+
+    // 이름에 매칭되는 스타일을 가져오는 함수
+    function getStyle(name) {
+      return userStyles[name] || defaultStyle;
     }
 
     function renderCalendar() {
@@ -128,28 +152,39 @@
         
         const dayData = scheduleData[dateStr] || { notes: "", dayManager: "", nightManager: "" };
 
-        let cellClasses = "p-1 rounded-2xl text-center cursor-pointer transition flex flex-col items-center justify-between h-20 sm:h-24 border";
+        // 날짜별 셀의 기본 클래스 설정 (높이를 h-24에서 h-28로 대폭 늘려 글자가 겹치지 않게 함)
+        let cellClasses = "p-1 rounded-2xl text-center cursor-pointer transition flex flex-col items-center justify-between h-24 sm:h-28 border-2";
         if (isToday) {
-          cellClasses += " bg-blue-50 text-blue-700 border-blue-400 ring-2 ring-blue-300 ring-opacity-50";
+          cellClasses += " bg-blue-50 text-blue-800 border-blue-400 ring-2 ring-blue-300 ring-opacity-50";
         } else {
-          cellClasses += " bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-100";
+          cellClasses += " bg-white hover:bg-slate-100 text-slate-800 border-slate-100";
         }
 
-        let scheduleHtml = `<div class="w-full space-y-0.5 overflow-hidden flex-1 flex flex-col justify-end">`;
+        // 3번 조건 반영: 아이콘 따로, 다음 줄에 이름 따로 나오도록 직렬화 레이아웃 배치
+        let scheduleHtml = `<div class="w-full space-y-1 overflow-hidden flex-1 flex flex-col justify-end mt-1">`;
+        
         if (dayData.dayManager) {
-          scheduleHtml += `<div class="text-[11px] sm:text-xs font-bold text-amber-700 truncate bg-amber-50 rounded px-0.5 text-center">☀️${dayData.dayManager}</div>`;
+          const style = getStyle(dayData.dayManager);
+          scheduleHtml += `
+            <div class="w-full flex flex-col items-center justify-center leading-none rounded-lg py-0.5 ${style.bg} ${style.border} border border-dashed">
+              <span class="text-[10px] sm:text-xs">☀️</span>
+              <span class="text-[11px] sm:text-sm font-black ${style.text} truncate max-w-full">${dayData.dayManager}</span>
+            </div>`;
         }
         if (dayData.nightManager) {
-          scheduleHtml += `<div class="text-[11px] sm:text-xs font-bold text-indigo-700 truncate bg-indigo-50 rounded px-0.5 text-center">🌙${dayData.nightManager}</div>`;
+          const style = getStyle(dayData.nightManager);
+          scheduleHtml += `
+            <div class="w-full flex flex-col items-center justify-center leading-none rounded-lg py-0.5 ${style.bg} ${style.border} border border-dashed">
+              <span class="text-[10px] sm:text-xs">🌙</span>
+              <span class="text-[11px] sm:text-sm font-black ${style.text} truncate max-w-full">${dayData.nightManager}</span>
+            </div>`;
         }
-        if (!dayData.dayManager && !dayData.nightManager && dayData.notes) {
-          scheduleHtml += `<div class="text-[11px] sm:text-xs font-bold text-slate-500 truncate bg-slate-100 rounded px-0.5 text-center">📢메모있음</div>`;
-        }
+        
         scheduleHtml += `</div>`;
 
         grid.innerHTML += `
           <div class="${cellClasses}" onclick="openModal('${dateStr}')">
-            <span class="text-lg sm:text-xl font-extrabold block mt-0.5">${i}</span>
+            <span class="text-xl sm:text-2xl font-black block mt-0.5">${i}</span>
             ${scheduleHtml}
           </div>
         `;
@@ -175,10 +210,23 @@
       
       const data = scheduleData[dateStr] || { notes: "", dayManager: "", nightManager: "" };
       
-      document.getElementById('view-day').innerText = data.dayManager || "없음";
-      document.getElementById('view-night').innerText = data.nightManager || "없음";
+      // 보기 모드 텍스트 세팅
+      document.getElementById('view-day').innerText = data.dayManager || "선택 없음";
+      document.getElementById('view-night').innerText = data.nightManager || "선택 없음";
       document.getElementById('view-notes').innerText = data.notes || "없음";
 
+      // 팝업 내부 박스 컬러도 담당자 색에 연동시켜 직관성 향상
+      const dayStyle = getStyle(data.dayManager);
+      const viewDayBox = document.getElementById('view-day-box');
+      viewDayBox.className = `p-4 rounded-xl border ${dayStyle.bg} ${dayStyle.border}`;
+      document.getElementById('view-day').className = `text-2xl font-black ${dayStyle.text}`;
+
+      const nightStyle = getStyle(data.nightManager);
+      const viewNightBox = document.getElementById('view-night-box');
+      viewNightBox.className = `p-4 rounded-xl border ${nightStyle.bg} ${nightStyle.border}`;
+      document.getElementById('view-night').className = `text-2xl font-black ${nightStyle.text}`;
+
+      // 드롭다운 셀렉트 박스 인덱스 바인딩
       document.getElementById('edit-day').value = data.dayManager || "";
       document.getElementById('edit-night').value = data.nightManager || "";
       document.getElementById('edit-notes').value = data.notes || "";
@@ -225,7 +273,6 @@
       document.getElementById('edit-mode').classList.add('hidden');
     }
 
-    // GET 방식으로 데이터를 전송하여 구글 보안 및 CORS 차단을 방지
     function saveData() {
       const btn = document.getElementById('save-btn');
       const day = document.getElementById('edit-day').value;
@@ -250,11 +297,11 @@
         renderCalendar(); 
         btn.disabled = false;
         btn.innerText = "💾 저장하기";
-        openModal(selectedDateStr); // 업데이트된 내용으로 새로고침
+        openModal(selectedDateStr);
       })
       .catch(error => {
         console.error("저장 실패:", error);
-        alert("저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+        alert("저장 중 오류가 발생했습니다.");
         btn.disabled = false;
         btn.innerText = "💾 저장하기";
       });
