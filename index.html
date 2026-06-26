@@ -7,67 +7,72 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-    /* 모달 뜰 때 배경 스크롤 방지 */
+    /* 팝업이 떴을 때 배경 스크롤을 막아주는 설정 */
     body.modal-open { overflow: hidden; }
   </style>
 </head>
-<body class="bg-slate-50 min-h-screen p-4 flex justify-center">
+<body class="bg-slate-50 min-h-screen p-2 sm:p-4 flex justify-center">
   
-  <div class="w-full max-w-md bg-white rounded-3xl shadow p-5 mt-2">
+  <div class="w-full max-w-md bg-white rounded-3xl shadow-md p-4 sm:p-5 mt-2">
+    
     <div class="flex justify-between items-center mb-6">
-      <button onclick="changeMonth(-1)" class="p-2 bg-slate-100 rounded-xl hover:bg-slate-200 transition">◀</button>
-      <h2 id="month-year" class="text-2xl font-black text-slate-800">로딩 중...</h2>
-      <button onclick="changeMonth(1)" class="p-2 bg-slate-100 rounded-xl hover:bg-slate-200 transition">▶</button>
+      <button onclick="changeMonth(-1)" class="p-3 bg-slate-100 rounded-xl hover:bg-slate-200 text-2xl font-bold transition">◀</button>
+      <h2 id="month-year" class="text-2xl sm:text-3xl font-black text-slate-800">로딩 중...</h2>
+      <button onclick="changeMonth(1)" class="p-3 bg-slate-100 rounded-xl hover:bg-slate-200 text-2xl font-bold transition">▶</button>
     </div>
 
-    <div class="grid grid-cols-7 gap-1 text-center font-bold text-slate-400 mb-2 text-sm">
-      <div class="text-red-400">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-400">토</div>
+    <div class="grid grid-cols-7 gap-1 text-center font-bold text-slate-500 mb-3 text-lg">
+      <div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
     </div>
 
-    <div id="calendar-grid" class="grid grid-cols-7 gap-2 text-center"></div>
+    <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 text-center"></div>
   </div>
 
-  <div id="modal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-40 flex items-center justify-center p-4 z-50 transition-opacity">
+  <div id="modal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-3xl w-full max-w-sm p-6 relative shadow-2xl">
       
-      <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-2xl font-bold px-2">&times;</button>
+      <button onclick="closeModal()" class="absolute top-3 right-4 text-slate-400 hover:text-slate-700 text-4xl font-bold px-2">&times;</button>
       
-      <h3 id="modal-date-title" class="text-xl font-black text-slate-800 mb-5 border-b pb-3"></h3>
+      <div class="flex items-center justify-between border-b pb-3 mb-5 pr-8">
+        <button onclick="navigateModal(-1)" class="text-slate-400 hover:text-slate-800 text-3xl font-bold p-2">◀</button>
+        <h3 id="modal-date-title" class="text-2xl font-black text-slate-800 text-center flex-1 mx-1"></h3>
+        <button onclick="navigateModal(1)" class="text-slate-400 hover:text-slate-800 text-3xl font-bold p-2">▶</button>
+      </div>
 
       <div id="view-mode" class="space-y-4">
-        <div class="bg-amber-50 p-3 rounded-xl border border-amber-100">
-          <span class="text-sm font-bold text-amber-700 block mb-1">☀️ 주간 담당</span>
-          <p id="view-day" class="text-lg text-slate-700 font-medium whitespace-pre-wrap">없음</p>
+        <div class="bg-amber-50 p-4 rounded-xl border border-amber-100">
+          <span class="text-base font-bold text-amber-800 block mb-1">☀️ 주간 담당</span>
+          <p id="view-day" class="text-2xl text-slate-800 font-black whitespace-pre-wrap">-</p>
         </div>
-        <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100">
-          <span class="text-sm font-bold text-indigo-700 block mb-1">🌙 야간 담당</span>
-          <p id="view-night" class="text-lg text-slate-700 font-medium whitespace-pre-wrap">없음</p>
+        <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+          <span class="text-base font-bold text-indigo-800 block mb-1">🌙 야간 담당</span>
+          <p id="view-night" class="text-2xl text-slate-800 font-black whitespace-pre-wrap">-</p>
         </div>
-        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-          <span class="text-sm font-bold text-slate-600 block mb-1">📢 전달사항</span>
-          <p id="view-notes" class="text-lg text-slate-700 font-medium whitespace-pre-wrap">없음</p>
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <span class="text-base font-bold text-slate-700 block mb-1">📢 가족 전달사항</span>
+          <p id="view-notes" class="text-xl text-slate-800 font-bold whitespace-pre-wrap">-</p>
         </div>
-        <button onclick="enterEditMode()" class="w-full mt-4 bg-slate-800 text-white font-bold py-3 rounded-xl text-lg shadow">
-          ✏️ 일정 편집하기
+        <button onclick="enterEditMode()" class="w-full mt-4 bg-slate-800 active:bg-slate-900 text-white font-black py-4 rounded-xl text-xl shadow">
+          ✏️ 내용 수정하기
         </button>
       </div>
 
       <div id="edit-mode" class="hidden space-y-4">
         <div>
-          <label class="block text-sm font-bold text-amber-700 mb-1">☀️ 주간 담당</label>
-          <input type="text" id="edit-day" class="w-full p-2 border-2 border-slate-200 rounded-lg text-lg focus:outline-none focus:border-amber-400">
+          <label class="block text-base font-bold text-amber-800 mb-1">☀️ 주간 담당</label>
+          <input type="text" id="edit-day" class="w-full p-3 border-2 border-slate-200 rounded-xl text-xl font-bold focus:outline-none focus:border-amber-400">
         </div>
         <div>
-          <label class="block text-sm font-bold text-indigo-700 mb-1">🌙 야간 담당</label>
-          <input type="text" id="edit-night" class="w-full p-2 border-2 border-slate-200 rounded-lg text-lg focus:outline-none focus:border-indigo-400">
+          <label class="block text-base font-bold text-indigo-800 mb-1">🌙 야간 담당</label>
+          <input type="text" id="edit-night" class="w-full p-3 border-2 border-slate-200 rounded-xl text-xl font-bold focus:outline-none focus:border-indigo-400">
         </div>
         <div>
-          <label class="block text-sm font-bold text-slate-600 mb-1">📢 전달사항</label>
-          <textarea id="edit-notes" rows="3" class="w-full p-2 border-2 border-slate-200 rounded-lg text-lg focus:outline-none focus:border-blue-400"></textarea>
+          <label class="block text-base font-bold text-slate-700 mb-1">📢 전달사항</label>
+          <textarea id="edit-notes" rows="3" class="w-full p-3 border-2 border-slate-200 rounded-xl text-xl font-bold focus:outline-none focus:border-blue-400"></textarea>
         </div>
         <div class="flex space-x-2 pt-2">
-          <button onclick="cancelEdit()" class="w-1/3 bg-slate-200 text-slate-700 font-bold py-3 rounded-xl">취소</button>
-          <button onclick="saveData()" id="save-btn" class="w-2/3 bg-blue-600 text-white font-bold py-3 rounded-xl shadow">💾 저장</button>
+          <button onclick="cancelEdit()" class="w-1/3 bg-slate-200 active:bg-slate-300 text-slate-700 font-black py-4 rounded-xl text-lg">취소</button>
+          <button onclick="saveData()" id="save-btn" class="w-2/3 bg-blue-600 active:bg-blue-700 text-white font-black py-4 rounded-xl text-lg shadow">💾 저장하기</button>
         </div>
       </div>
 
@@ -75,20 +80,20 @@
   </div>
 
   <script>
-    // 🚨 여기에 구글 Apps Script 웹앱 URL을 붙여넣으세요!
+    // 🚨기에 본인의 구글 Apps Script 웹웹 URL 주소를 붙여넣으세요.
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxa34Xo-jEk-hIjdf-JU_vTNeXocnIMpDZmgCJQZxYQSKmXsMjCHgMUD9vPtrsIacZFQQ/exec";
 
     let currentDate = new Date();
-    let scheduleData = {}; // 서버에서 가져온 전체 데이터 저장
-    let selectedDateStr = ""; // 현재 클릭한 날짜
+    let scheduleData = {};
+    let selectedDateStr = "";
+    const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
 
-    // 페이지 로드 시 데이터 가져오기
     window.onload = function() {
       fetchDataAndRender();
     };
 
     function fetchDataAndRender() {
-      document.getElementById('month-year').innerText = "데이터 불러오는 중...";
+      document.getElementById('month-year').innerText = "불러오는 중...";
       fetch(APPS_SCRIPT_URL)
         .then(response => response.json())
         .then(data => {
@@ -96,12 +101,12 @@
           renderCalendar();
         })
         .catch(error => {
-          console.error("데이터 로드 실패:", error);
-          document.getElementById('month-year').innerText = "불러오기 실패";
+          console.error("로드 실패:", error);
+          document.getElementById('month-year').innerText = "오류 발생";
         });
     }
 
-    // 달력 그리기 로직
+    // 달력 렌더링 (일자별 칸 높이를 키우고 이름을 바로 표시)
     function renderCalendar() {
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
@@ -112,40 +117,49 @@
       const grid = document.getElementById('calendar-grid');
       grid.innerHTML = "";
 
-      // 1일 이전의 빈 칸 채우기
+      // 시작 요일 맞추기용 빈 칸
       for (let i = 0; i < firstDay; i++) {
-        grid.innerHTML += `<div class="p-2"></div>`;
+        grid.innerHTML += `<div class="p-1"></div>`;
       }
 
-      // 날짜 채우기
+      // 날짜 칸 생성
       for (let i = 1; i <= lastDate; i++) {
-        // YYYY-MM-DD 포맷 만들기
         const mStr = String(month + 1).padStart(2, '0');
         const dStr = String(i).padStart(2, '0');
         const dateStr = `${year}-${mStr}-${dStr}`;
         
-        // 오늘 날짜인지 확인
         const today = new Date();
         const isToday = (i === today.getDate() && month === today.getMonth() && year === today.getFullYear());
         
-        // 해당 날짜에 데이터가 있는지 확인
-        const hasData = scheduleData[dateStr] && (scheduleData[dateStr].notes || scheduleData[dateStr].dayManager || scheduleData[dateStr].nightManager);
+        const dayData = scheduleData[dateStr] || { notes: "", dayManager: "", nightManager: "" };
 
-        let cellClasses = "p-3 rounded-xl text-lg font-medium cursor-pointer transition flex flex-col items-center justify-center h-14";
+        // 모바일 화면 공간 확보를 위해 높이를 h-20~h-24로 확대
+        let cellClasses = "p-1 rounded-2xl text-center cursor-pointer transition flex flex-col items-center justify-between h-20 sm:h-24 border";
         
         if (isToday) {
-          cellClasses += " bg-blue-100 text-blue-700 ring-2 ring-blue-400";
+          cellClasses += " bg-blue-50 text-blue-700 border-blue-400 ring-2 ring-blue-300 ring-opacity-50";
         } else {
-          cellClasses += " bg-white hover:bg-slate-100 text-slate-700";
+          cellClasses += " bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-100";
         }
 
-        // 일정이 있으면 파란색 점 표시
-        const dotHtml = hasData ? `<div class="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1"></div>` : `<div class="w-1.5 h-1.5 mt-1"></div>`;
+        // 달력 내부에 주간/야간 담당자 직접 표시 영역
+        let scheduleHtml = `<div class="w-full space-y-0.5 overflow-hidden flex-1 flex flex-col justify-end">`;
+        if (dayData.dayManager) {
+          scheduleHtml += `<div class="text-[11px] sm:text-xs font-bold text-amber-700 truncate bg-amber-50 rounded px-0.5 text-center">☀️${dayData.dayManager}</div>`;
+        }
+        if (dayData.nightManager) {
+          scheduleHtml += `<div class="text-[11px] sm:text-xs font-bold text-indigo-700 truncate bg-indigo-50 rounded px-0.5 text-center">🌙${dayData.nightManager}</div>`;
+        }
+        // 담당자는 없는데 전달사항만 있는 경우 표시
+        if (!dayData.dayManager && !dayData.nightManager && dayData.notes) {
+          scheduleHtml += `<div class="text-[11px] sm:text-xs font-bold text-slate-500 truncate bg-slate-100 rounded px-0.5 text-center">📢메모있음</div>`;
+        }
+        scheduleHtml += `</div>`;
 
         grid.innerHTML += `
           <div class="${cellClasses}" onclick="openModal('${dateStr}')">
-            <span>${i}</span>
-            ${dotHtml}
+            <span class="text-lg sm:text-xl font-extrabold block mt-0.5">${i}</span>
+            ${scheduleHtml}
           </div>
         `;
       }
@@ -156,26 +170,30 @@
       renderCalendar();
     }
 
-    // --- 팝업(모달) 관련 로직 --- //
-
+    // 팝업 열기 (요일 표기 추가)
     function openModal(dateStr) {
       selectedDateStr = dateStr;
       const parts = dateStr.split('-');
-      document.getElementById('modal-date-title').innerText = `${parts[0]}년 ${parseInt(parts[1])}월 ${parseInt(parts[2])}일`;
+      const y = parseInt(parts[0]);
+      const m = parseInt(parts[1]);
+      const d = parseInt(parts[2]);
+      
+      const dateObj = new Date(y, m - 1, d);
+      const dayOfWeek = weekDays[dateObj.getDay()];
+      
+      // 제목에 요일 정보 결합
+      document.getElementById('modal-date-title').innerText = `${y}년 ${m}월 ${d}일 (${dayOfWeek})`;
       
       const data = scheduleData[dateStr] || { notes: "", dayManager: "", nightManager: "" };
       
-      // 보기 모드에 데이터 세팅
-      document.getElementById('view-day').innerText = data.dayManager || "-";
-      document.getElementById('view-night').innerText = data.nightManager || "-";
-      document.getElementById('view-notes').innerText = data.notes || "-";
+      document.getElementById('view-day').innerText = data.dayManager || "없음";
+      document.getElementById('view-night').innerText = data.nightManager || "없음";
+      document.getElementById('view-notes').innerText = data.notes || "없음";
 
-      // 편집 모드 인풋창에 데이터 미리 세팅
       document.getElementById('edit-day').value = data.dayManager || "";
       document.getElementById('edit-night').value = data.nightManager || "";
       document.getElementById('edit-notes').value = data.notes || "";
 
-      // 보기 모드로 창 열기
       document.getElementById('view-mode').classList.remove('hidden');
       document.getElementById('edit-mode').classList.add('hidden');
       
@@ -188,6 +206,29 @@
       document.body.classList.remove('modal-open');
     }
 
+    // 팝업 내부에서 전날/다음날 이동 로직
+    function navigateModal(offset) {
+      const parts = selectedDateStr.split('-');
+      const y = parseInt(parts[0]);
+      const m = parseInt(parts[1]);
+      const d = parseInt(parts[2]);
+      
+      const dateObj = new Date(y, m - 1, d);
+      dateObj.setDate(dateObj.getDate() + offset);
+      
+      const newY = dateObj.getFullYear();
+      const newM = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const newD = String(dateObj.getDate()).padStart(2, '0');
+      
+      // 전날/다음날 이동 시 월이 변경되면 배경 달력도 함께 동기화 변경
+      if (dateObj.getMonth() !== currentDate.getMonth() || dateObj.getFullYear() !== currentDate.getFullYear()) {
+        currentDate = new Date(dateObj);
+        renderCalendar();
+      }
+      
+      openModal(`${newY}-${newM}-${newD}`);
+    }
+
     function enterEditMode() {
       document.getElementById('view-mode').classList.add('hidden');
       document.getElementById('edit-mode').classList.remove('hidden');
@@ -198,7 +239,6 @@
       document.getElementById('edit-mode').classList.add('hidden');
     }
 
-    // 데이터 저장
     function saveData() {
       const btn = document.getElementById('save-btn');
       const day = document.getElementById('edit-day').value;
@@ -220,21 +260,16 @@
       })
       .then(response => response.json())
       .then(result => {
-        // 로컬 데이터 즉시 업데이트
         scheduleData[selectedDateStr] = { dayManager: day, nightManager: night, notes: notes };
-        
-        // 달력 다시 그려서 점(dot) 반영
         renderCalendar(); 
-        
-        // 버튼 복구 및 보기 모드로 전환
         btn.disabled = false;
-        btn.innerText = "💾 저장";
-        openModal(selectedDateStr); // 업데이트된 내용으로 다시 보기
+        btn.innerText = "💾 저장하기";
+        openModal(selectedDateStr);
       })
       .catch(error => {
         alert("오류가 발생했습니다.");
         btn.disabled = false;
-        btn.innerText = "💾 저장";
+        btn.innerText = "💾 저장하기";
       });
     }
   </script>
