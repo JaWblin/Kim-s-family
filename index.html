@@ -7,14 +7,12 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-    /* 팝업이 떴을 때 배경 스크롤을 막아주는 설정 */
     body.modal-open { overflow: hidden; }
   </style>
 </head>
 <body class="bg-slate-50 min-h-screen p-2 sm:p-4 flex justify-center">
   
   <div class="w-full max-w-md bg-white rounded-3xl shadow-md p-4 sm:p-5 mt-2">
-    
     <div class="flex justify-between items-center mb-6">
       <button onclick="changeMonth(-1)" class="p-3 bg-slate-100 rounded-xl hover:bg-slate-200 text-2xl font-bold transition">◀</button>
       <h2 id="month-year" class="text-2xl sm:text-3xl font-black text-slate-800">로딩 중...</h2>
@@ -30,7 +28,6 @@
 
   <div id="modal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-3xl w-full max-w-sm p-6 relative shadow-2xl">
-      
       <button onclick="closeModal()" class="absolute top-3 right-4 text-slate-400 hover:text-slate-700 text-4xl font-bold px-2">&times;</button>
       
       <div class="flex items-center justify-between border-b pb-3 mb-5 pr-8">
@@ -80,7 +77,7 @@
   </div>
 
   <script>
-    // 🚨기에 본인의 구글 Apps Script 웹웹 URL 주소를 붙여넣으세요.
+    // 🚨 여기에 본인의 구글 Apps Script 웹앱 URL 주소를 정확히 입력하세요.
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxa34Xo-jEk-hIjdf-JU_vTNeXocnIMpDZmgCJQZxYQSKmXsMjCHgMUD9vPtrsIacZFQQ/exec";
 
     let currentDate = new Date();
@@ -92,9 +89,10 @@
       fetchDataAndRender();
     };
 
+    // GET 방식으로 데이터를 안전하게 읽어옴
     function fetchDataAndRender() {
       document.getElementById('month-year').innerText = "불러오는 중...";
-      fetch(APPS_SCRIPT_URL)
+      fetch(`${APPS_SCRIPT_URL}?action=read`)
         .then(response => response.json())
         .then(data => {
           scheduleData = data;
@@ -106,7 +104,6 @@
         });
     }
 
-    // 달력 렌더링 (일자별 칸 높이를 키우고 이름을 바로 표시)
     function renderCalendar() {
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
@@ -117,12 +114,10 @@
       const grid = document.getElementById('calendar-grid');
       grid.innerHTML = "";
 
-      // 시작 요일 맞추기용 빈 칸
       for (let i = 0; i < firstDay; i++) {
         grid.innerHTML += `<div class="p-1"></div>`;
       }
 
-      // 날짜 칸 생성
       for (let i = 1; i <= lastDate; i++) {
         const mStr = String(month + 1).padStart(2, '0');
         const dStr = String(i).padStart(2, '0');
@@ -133,16 +128,13 @@
         
         const dayData = scheduleData[dateStr] || { notes: "", dayManager: "", nightManager: "" };
 
-        // 모바일 화면 공간 확보를 위해 높이를 h-20~h-24로 확대
         let cellClasses = "p-1 rounded-2xl text-center cursor-pointer transition flex flex-col items-center justify-between h-20 sm:h-24 border";
-        
         if (isToday) {
           cellClasses += " bg-blue-50 text-blue-700 border-blue-400 ring-2 ring-blue-300 ring-opacity-50";
         } else {
           cellClasses += " bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-100";
         }
 
-        // 달력 내부에 주간/야간 담당자 직접 표시 영역
         let scheduleHtml = `<div class="w-full space-y-0.5 overflow-hidden flex-1 flex flex-col justify-end">`;
         if (dayData.dayManager) {
           scheduleHtml += `<div class="text-[11px] sm:text-xs font-bold text-amber-700 truncate bg-amber-50 rounded px-0.5 text-center">☀️${dayData.dayManager}</div>`;
@@ -150,7 +142,6 @@
         if (dayData.nightManager) {
           scheduleHtml += `<div class="text-[11px] sm:text-xs font-bold text-indigo-700 truncate bg-indigo-50 rounded px-0.5 text-center">🌙${dayData.nightManager}</div>`;
         }
-        // 담당자는 없는데 전달사항만 있는 경우 표시
         if (!dayData.dayManager && !dayData.nightManager && dayData.notes) {
           scheduleHtml += `<div class="text-[11px] sm:text-xs font-bold text-slate-500 truncate bg-slate-100 rounded px-0.5 text-center">📢메모있음</div>`;
         }
@@ -170,7 +161,6 @@
       renderCalendar();
     }
 
-    // 팝업 열기 (요일 표기 추가)
     function openModal(dateStr) {
       selectedDateStr = dateStr;
       const parts = dateStr.split('-');
@@ -181,7 +171,6 @@
       const dateObj = new Date(y, m - 1, d);
       const dayOfWeek = weekDays[dateObj.getDay()];
       
-      // 제목에 요일 정보 결합
       document.getElementById('modal-date-title').innerText = `${y}년 ${m}월 ${d}일 (${dayOfWeek})`;
       
       const data = scheduleData[dateStr] || { notes: "", dayManager: "", nightManager: "" };
@@ -196,7 +185,6 @@
 
       document.getElementById('view-mode').classList.remove('hidden');
       document.getElementById('edit-mode').classList.add('hidden');
-      
       document.getElementById('modal').classList.remove('hidden');
       document.body.classList.add('modal-open');
     }
@@ -206,7 +194,6 @@
       document.body.classList.remove('modal-open');
     }
 
-    // 팝업 내부에서 전날/다음날 이동 로직
     function navigateModal(offset) {
       const parts = selectedDateStr.split('-');
       const y = parseInt(parts[0]);
@@ -220,7 +207,6 @@
       const newM = String(dateObj.getMonth() + 1).padStart(2, '0');
       const newD = String(dateObj.getDate()).padStart(2, '0');
       
-      // 전날/다음날 이동 시 월이 변경되면 배경 달력도 함께 동기화 변경
       if (dateObj.getMonth() !== currentDate.getMonth() || dateObj.getFullYear() !== currentDate.getFullYear()) {
         currentDate = new Date(dateObj);
         renderCalendar();
@@ -239,6 +225,7 @@
       document.getElementById('edit-mode').classList.add('hidden');
     }
 
+    // GET 방식으로 데이터를 전송하여 구글 보안 및 CORS 차단을 방지
     function saveData() {
       const btn = document.getElementById('save-btn');
       const day = document.getElementById('edit-day').value;
@@ -248,26 +235,26 @@
       btn.disabled = true;
       btn.innerText = "⏳ 저장 중...";
 
-      const formData = new URLSearchParams();
-      formData.append('date', selectedDateStr);
-      formData.append('dayManager', day);
-      formData.append('nightManager', night);
-      formData.append('notes', notes);
+      const queryParams = new URLSearchParams({
+        action: 'save',
+        date: selectedDateStr,
+        dayManager: day,
+        nightManager: night,
+        notes: notes
+      }).toString();
 
-      fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        body: formData
-      })
+      fetch(`${APPS_SCRIPT_URL}?${queryParams}`)
       .then(response => response.json())
       .then(result => {
         scheduleData[selectedDateStr] = { dayManager: day, nightManager: night, notes: notes };
         renderCalendar(); 
         btn.disabled = false;
         btn.innerText = "💾 저장하기";
-        openModal(selectedDateStr);
+        openModal(selectedDateStr); // 업데이트된 내용으로 새로고침
       })
       .catch(error => {
-        alert("오류가 발생했습니다.");
+        console.error("저장 실패:", error);
+        alert("저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
         btn.disabled = false;
         btn.innerText = "💾 저장하기";
       });
