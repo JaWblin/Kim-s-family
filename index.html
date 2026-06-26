@@ -28,7 +28,7 @@
   </div>
 
   <div id="modal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-3xl w-full max-w-sm p-6 relative shadow-2xl">
+    <div class="bg-white rounded-3xl w-full max-w-sm p-6 relative shadow-2xl max-h-[85vh] overflow-y-auto">
       
       <button onclick="closeModal()" class="absolute top-3 right-4 text-slate-400 hover:text-slate-700 text-4xl font-bold px-2">&times;</button>
       
@@ -75,10 +75,15 @@
             <option value="환기">환기</option>
           </select>
         </div>
+        
         <div>
-          <label class="block text-base font-bold text-slate-700 mb-1">📢 전달사항 입력</label>
-          <textarea id="edit-notes" rows="3" class="w-full p-3 border-2 border-slate-200 rounded-xl text-xl font-bold focus:outline-none focus:border-blue-400" placeholder="메모를 입력해 주세요."></textarea>
+          <div class="flex justify-between items-center mb-1">
+            <label class="block text-base font-bold text-slate-700">📢 전달사항 입력</label>
+            <button onclick="clearNotes()" class="text-sm font-bold text-red-500 bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 active:bg-red-100 transition">❌ 전체 지우기</button>
+          </div>
+          <textarea id="edit-notes" rows="4" class="w-full p-3 border-2 border-slate-200 rounded-xl text-xl font-bold focus:outline-none focus:border-blue-400" placeholder="메모를 입력해 주세요."></textarea>
         </div>
+        
         <div class="flex space-x-2 pt-2">
           <button onclick="cancelEdit()" class="w-1/3 bg-slate-200 active:bg-slate-300 text-slate-700 font-black py-4 rounded-xl text-lg">취소</button>
           <button onclick="saveData()" id="save-btn" class="w-2/3 bg-blue-600 active:bg-blue-700 text-white font-black py-4 rounded-xl text-lg shadow">💾 저장하기</button>
@@ -97,7 +102,6 @@
     let selectedDateStr = "";
     const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
 
-    // 사람별 고유 컬러 에셋 정의 (가독성 향상용 파스텔톤 컬러셋)
     const userStyles = {
       '조여사': { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', tagBg: 'bg-emerald-100' },
       '흥기': { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', tagBg: 'bg-orange-100' },
@@ -123,7 +127,6 @@
         });
     }
 
-    // 이름에 매칭되는 스타일을 가져오는 함수
     function getStyle(name) {
       return userStyles[name] || defaultStyle;
     }
@@ -152,7 +155,6 @@
         
         const dayData = scheduleData[dateStr] || { notes: "", dayManager: "", nightManager: "" };
 
-        // 날짜별 셀의 기본 클래스 설정 (높이를 h-24에서 h-28로 대폭 늘려 글자가 겹치지 않게 함)
         let cellClasses = "p-1 rounded-2xl text-center cursor-pointer transition flex flex-col items-center justify-between h-24 sm:h-28 border-2";
         if (isToday) {
           cellClasses += " bg-blue-50 text-blue-800 border-blue-400 ring-2 ring-blue-300 ring-opacity-50";
@@ -160,7 +162,6 @@
           cellClasses += " bg-white hover:bg-slate-100 text-slate-800 border-slate-100";
         }
 
-        // 3번 조건 반영: 아이콘 따로, 다음 줄에 이름 따로 나오도록 직렬화 레이아웃 배치
         let scheduleHtml = `<div class="w-full space-y-1 overflow-hidden flex-1 flex flex-col justify-end mt-1">`;
         
         if (dayData.dayManager) {
@@ -210,12 +211,10 @@
       
       const data = scheduleData[dateStr] || { notes: "", dayManager: "", nightManager: "" };
       
-      // 보기 모드 텍스트 세팅
       document.getElementById('view-day').innerText = data.dayManager || "선택 없음";
       document.getElementById('view-night').innerText = data.nightManager || "선택 없음";
       document.getElementById('view-notes').innerText = data.notes || "없음";
 
-      // 팝업 내부 박스 컬러도 담당자 색에 연동시켜 직관성 향상
       const dayStyle = getStyle(data.dayManager);
       const viewDayBox = document.getElementById('view-day-box');
       viewDayBox.className = `p-4 rounded-xl border ${dayStyle.bg} ${dayStyle.border}`;
@@ -226,7 +225,6 @@
       viewNightBox.className = `p-4 rounded-xl border ${nightStyle.bg} ${nightStyle.border}`;
       document.getElementById('view-night').className = `text-2xl font-black ${nightStyle.text}`;
 
-      // 드롭다운 셀렉트 박스 인덱스 바인딩
       document.getElementById('edit-day').value = data.dayManager || "";
       document.getElementById('edit-night').value = data.nightManager || "";
       document.getElementById('edit-notes').value = data.notes || "";
@@ -235,6 +233,8 @@
       document.getElementById('edit-mode').classList.add('hidden');
       document.getElementById('modal').classList.remove('hidden');
       document.body.classList.add('modal-open');
+      
+      document.querySelector('#modal > div').scrollTop = 0;
     }
 
     function closeModal() {
@@ -266,11 +266,19 @@
     function enterEditMode() {
       document.getElementById('view-mode').classList.add('hidden');
       document.getElementById('edit-mode').classList.remove('hidden');
+      document.querySelector('#modal > div').scrollTop = 0;
     }
 
     function cancelEdit() {
       document.getElementById('view-mode').classList.remove('hidden');
       document.getElementById('edit-mode').classList.add('hidden');
+      document.querySelector('#modal > div').scrollTop = 0;
+    }
+
+    // 📢 전달사항 입력란 내용을 즉시 청소해주는 함수
+    function clearNotes() {
+      document.getElementById('edit-notes').value = "";
+      document.getElementById('edit-notes').focus(); // 삭제 후 즉시 타이핑 가능하도록 포커스
     }
 
     function saveData() {
