@@ -60,7 +60,6 @@
     .btn-submit { width: 100%; padding: 15px; background: var(--primary); color: #fff; font-size: 1.05rem; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: background-color 0.2s; }
     .btn-submit:hover { background: var(--primary-hover); }
 
-    /* 초고속 토스트 팝업 (얼럿창 대신) */
     #quickToast {
       position: fixed;
       top: 16px;
@@ -89,11 +88,14 @@
 
     .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .sort-btn { padding: 6px 10px; border: 1px solid var(--border); background: #fff; border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-weight: 600; }
+    
+    /* 명부 카드 */
     .record-card { padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; background: #fff; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
     .record-card:hover { border-color: var(--primary); background: #faf5ff; }
     .record-name { font-weight: 700; font-size: 1rem; }
-    .record-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
-    .record-amount { font-size: 1.1rem; font-weight: 800; color: #047857; }
+    .record-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 3px; }
+    .record-time { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+    .record-amount { font-size: 1.15rem; font-weight: 800; color: #047857; }
 
     .summary-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; border-radius: 8px; }
     .summary-item:hover { background-color: #f8fafc; }
@@ -108,10 +110,8 @@
 </head>
 <body class="device-mobile">
 
-  <!-- 즉시 알림 토스트 바 -->
   <div id="quickToast">✔ 등록 완료!</div>
 
-  <!-- 시작 모드 선택 모달 -->
   <div id="mode-selector">
     <h2 style="margin-bottom: 10px;">사용 환경을 선택해 주세요</h2>
     <button class="mode-choice-btn" onclick="selectDeviceMode('mobile')">📱 스마트폰 모드</button>
@@ -140,7 +140,6 @@
           <input type="date" id="inputDate" class="form-control is-filled" value="2026-11-22">
         </div>
 
-        <!-- 즐겨찾기 버튼 영역 -->
         <div class="form-group">
           <div class="label-wrapper">
             <label class="form-label">⭐ 즐겨찾기 (원터치 선택)</label>
@@ -278,7 +277,10 @@
   <!-- 행 수정/삭제용 모달 -->
   <div class="modal-overlay" id="editModal">
     <div class="modal">
-      <h3 style="margin-bottom: 14px;">명부 항목 수정 및 삭제</h3>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px;">
+        <h3 style="margin:0;">명부 항목 수정</h3>
+        <span id="editModalTime" style="font-size: 0.75rem; color: #94a3b8; font-weight:600;"></span>
+      </div>
       <input type="hidden" id="editRowIndex">
       <div class="form-group">
         <label class="form-label">일자</label>
@@ -305,7 +307,6 @@
         <input type="text" id="editNote2" class="form-control">
       </div>
       
-      <!-- 수정 모달 하단 버튼: 삭제 / 취소 / 저장 -->
       <div style="display: flex; gap: 8px; margin-top: 18px;">
         <button type="button" class="btn-submit" style="background:var(--danger); flex: 1;" onclick="confirmDelete()">🗑️ 삭제</button>
         <button type="button" class="btn-submit" style="background:#64748b; flex: 1;" onclick="closeModal()">취소</button>
@@ -413,7 +414,6 @@
       }).then(res => res.json());
     }
 
-    // ⚡ 초고속 등록 (낙관적 UI: 누르는 즉시 초기화 후 백그라운드 전송)
     function submitRecord() {
       const affiliation = document.getElementById('inputAffiliation').value.trim();
       const name = document.getElementById('inputName').value.trim();
@@ -448,11 +448,9 @@
         note2: document.getElementById('inputNote2').value
       };
 
-      // 1. 대기하지 않고 즉시 화면 초기화 및 피드백 표시
       showToast(`✔ ${name} 님 (${currentAmount}만원) 저장 중...`);
       resetForm();
 
-      // 2. 백그라운드에서 구글 시트로 전송 (사용자는 바로 다음 입력 진행 가능)
       postToSheet(payload).then(result => {
         if (!result.success) {
           alert('저장 도중 오류가 발생했습니다: ' + (result.error || '확인 필요'));
@@ -481,7 +479,6 @@
       validateField('Name', '');
       validateField('Amount', 5);
       
-      // 다음 하객 입력을 위해 성명 또는 소속창으로 포커스
       document.getElementById('inputName').focus();
     }
 
@@ -552,6 +549,7 @@
           <div>
             <div class="record-name">${r.name} <span style="font-weight:normal; font-size:0.85rem; color:#64748b;">(${r.affiliation || '소속 없음'})</span></div>
             <div class="record-sub">귀속: <b>${r.target || '-'}</b> | ${r.note2 ? '비고: ' + r.note2 + ' | ' : ''}${r.date}</div>
+            <div class="record-time">🕒 ${r.timestamp ? r.timestamp : '작성시간 없음'}</div>
           </div>
           <div class="record-amount">${r.amount}만원</div>
         </div>
@@ -569,6 +567,7 @@
       document.getElementById('editAmount').value = item.amount;
       document.getElementById('editTarget').value = item.target;
       document.getElementById('editNote2').value = item.note2;
+      document.getElementById('editModalTime').innerText = item.timestamp ? `작성: ${item.timestamp}` : '';
 
       document.getElementById('editModal').style.display = 'flex';
     }
@@ -603,13 +602,11 @@
       }
     }
 
-    // 🗑️ 삭제 확인 및 실행 함수
     async function confirmDelete() {
       const name = document.getElementById('editName').value;
       const amount = document.getElementById('editAmount').value;
       const rowIndex = document.getElementById('editRowIndex').value;
 
-      // 팝업 컨펌창
       const isConfirmed = confirm(`[삭제 확인]\n\n성명: ${name}\n금액: ${amount}만원\n\n정말 이 내역을 삭제하시겠습니까?\n(삭제 후에는 복원할 수 없습니다)`);
       if (!isConfirmed) return;
 
@@ -622,7 +619,7 @@
         if (result.success) {
           alert('삭제되었습니다.');
           closeModal();
-          loadRecords(); // 명부 새로고침
+          loadRecords();
         } else {
           alert('삭제 실패: ' + (result.error || '알 수 없는 오류'));
         }
