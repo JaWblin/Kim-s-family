@@ -9,6 +9,7 @@
       --primary: #2563eb;
       --primary-hover: #1d4ed8;
       --success: #10b981;
+      --danger: #ef4444;
       --bg: #f8fafc;
       --card-bg: #ffffff;
       --border: #e2e8f0;
@@ -58,9 +59,29 @@
 
     .btn-submit { width: 100%; padding: 15px; background: var(--primary); color: #fff; font-size: 1.05rem; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: background-color 0.2s; }
     .btn-submit:hover { background: var(--primary-hover); }
-    .btn-submit:disabled { background: #94a3b8; cursor: not-allowed; }
 
-    /* 필터 칩 스타일 */
+    /* 초고속 토스트 팝업 (얼럿창 대신) */
+    #quickToast {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #065f46;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 500;
+      display: none;
+      animation: fadeInDown 0.25s ease;
+    }
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translate(-50%, -15px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+
     .filter-wrapper { margin-bottom: 14px; overflow-x: auto; white-space: nowrap; padding-bottom: 4px; }
     .filter-btn-group { display: inline-flex; gap: 6px; }
     .btn-filter { padding: 6px 12px; border: 1px solid var(--border); border-radius: 20px; background: #fff; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--text-muted); }
@@ -74,7 +95,6 @@
     .record-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
     .record-amount { font-size: 1.1rem; font-weight: 800; color: #047857; }
 
-    /* 정산 리스트 클릭 가능 스타일 */
     .summary-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; border-radius: 8px; }
     .summary-item:hover { background-color: #f8fafc; }
 
@@ -87,6 +107,9 @@
   </style>
 </head>
 <body class="device-mobile">
+
+  <!-- 즉시 알림 토스트 바 -->
+  <div id="quickToast">✔ 등록 완료!</div>
 
   <!-- 시작 모드 선택 모달 -->
   <div id="mode-selector">
@@ -221,7 +244,6 @@
 
     <!-- 탭 2: 명부 조회 및 수정 -->
     <div id="tab-list" style="display:none;">
-      <!-- 대상자 필터 칩 영역 -->
       <div class="filter-wrapper">
         <div class="filter-btn-group" id="filterButtonGroup">
           <button type="button" class="btn-filter active" onclick="setTargetFilter('')">전체보기</button>
@@ -253,10 +275,10 @@
     </div>
   </div>
 
-  <!-- 행 수정용 모달 -->
+  <!-- 행 수정/삭제용 모달 -->
   <div class="modal-overlay" id="editModal">
     <div class="modal">
-      <h3 style="margin-bottom: 14px;">명부 항목 수정</h3>
+      <h3 style="margin-bottom: 14px;">명부 항목 수정 및 삭제</h3>
       <input type="hidden" id="editRowIndex">
       <div class="form-group">
         <label class="form-label">일자</label>
@@ -282,9 +304,12 @@
         <label class="form-label">비고2 (메모)</label>
         <input type="text" id="editNote2" class="form-control">
       </div>
-      <div style="display: flex; gap: 8px; margin-top: 16px;">
-        <button class="btn-submit" style="background:#64748b;" onclick="closeModal()">취소</button>
-        <button class="btn-submit" onclick="submitEdit()">수정 저장</button>
+      
+      <!-- 수정 모달 하단 버튼: 삭제 / 취소 / 저장 -->
+      <div style="display: flex; gap: 8px; margin-top: 18px;">
+        <button type="button" class="btn-submit" style="background:var(--danger); flex: 1;" onclick="confirmDelete()">🗑️ 삭제</button>
+        <button type="button" class="btn-submit" style="background:#64748b; flex: 1;" onclick="closeModal()">취소</button>
+        <button type="button" class="btn-submit" style="flex: 1.5;" onclick="submitEdit()">수정 저장</button>
       </div>
     </div>
   </div>
@@ -295,7 +320,16 @@
     let currentRecords = [];
     let isDescending = true;
     let currentAmount = 5;
-    let selectedFilterTarget = ''; // 현재 선택된 대상자 필터 (빈 문자열은 전체)
+    let selectedFilterTarget = '';
+
+    function showToast(msg) {
+      const toast = document.getElementById('quickToast');
+      toast.innerText = msg;
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 1800);
+    }
 
     function selectDeviceMode(mode) {
       document.body.className = mode === 'mobile' ? 'device-mobile' : 'device-pc';
@@ -379,7 +413,8 @@
       }).then(res => res.json());
     }
 
-    async function submitRecord() {
+    // ⚡ 초고속 등록 (낙관적 UI: 누르는 즉시 초기화 후 백그라운드 전송)
+    function submitRecord() {
       const affiliation = document.getElementById('inputAffiliation').value.trim();
       const name = document.getElementById('inputName').value.trim();
 
@@ -413,24 +448,18 @@
         note2: document.getElementById('inputNote2').value
       };
 
-      const btn = document.getElementById('btnSubmitRecord');
-      btn.disabled = true;
-      btn.innerText = '시트에 저장 중...';
+      // 1. 대기하지 않고 즉시 화면 초기화 및 피드백 표시
+      showToast(`✔ ${name} 님 (${currentAmount}만원) 저장 중...`);
+      resetForm();
 
-      try {
-        const result = await postToSheet(payload);
-        if (result.success) {
-          alert('등록 완료되었습니다!');
-          resetForm();
-        } else {
-          alert('저장 실패: ' + (result.error || '알 수 없는 오류'));
+      // 2. 백그라운드에서 구글 시트로 전송 (사용자는 바로 다음 입력 진행 가능)
+      postToSheet(payload).then(result => {
+        if (!result.success) {
+          alert('저장 도중 오류가 발생했습니다: ' + (result.error || '확인 필요'));
         }
-      } catch (e) {
-        alert('서버 통신 오류: ' + e.toString());
-      } finally {
-        btn.disabled = false;
-        btn.innerText = '기록 추가하기';
-      }
+      }).catch(err => {
+        alert('서버 연결 실패: ' + err.toString());
+      });
     }
 
     function resetForm() {
@@ -451,6 +480,9 @@
       validateField('Affiliation', '');
       validateField('Name', '');
       validateField('Amount', 5);
+      
+      // 다음 하객 입력을 위해 성명 또는 소속창으로 포커스
+      document.getElementById('inputName').focus();
     }
 
     async function loadRecords() {
@@ -468,11 +500,8 @@
       }
     }
 
-    // 대상자 필터 변경
     function setTargetFilter(targetName) {
       selectedFilterTarget = targetName;
-      
-      // 필터 버튼 활성화 스타일 업데이트
       document.querySelectorAll('#filterButtonGroup .btn-filter').forEach(btn => {
         if ((targetName === '' && btn.innerText === '전체보기') || btn.innerText === targetName) {
           btn.classList.add('active');
@@ -480,7 +509,6 @@
           btn.classList.remove('active');
         }
       });
-
       renderRecords();
     }
 
@@ -499,7 +527,6 @@
         return;
       }
 
-      // 대상자 필터링 적용
       let filtered = currentRecords;
       if (selectedFilterTarget !== '') {
         filtered = currentRecords.filter(r => (r.target || '').includes(selectedFilterTarget));
@@ -508,7 +535,6 @@
         document.getElementById('filterLabelTitle').innerText = '전체';
       }
 
-      // 건수 및 합계 금액 계산
       const totalAmount = filtered.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
       document.getElementById('recordCount').innerText = filtered.length;
       document.getElementById('recordSum').innerText = totalAmount.toLocaleString();
@@ -577,6 +603,34 @@
       }
     }
 
+    // 🗑️ 삭제 확인 및 실행 함수
+    async function confirmDelete() {
+      const name = document.getElementById('editName').value;
+      const amount = document.getElementById('editAmount').value;
+      const rowIndex = document.getElementById('editRowIndex').value;
+
+      // 팝업 컨펌창
+      const isConfirmed = confirm(`[삭제 확인]\n\n성명: ${name}\n금액: ${amount}만원\n\n정말 이 내역을 삭제하시겠습니까?\n(삭제 후에는 복원할 수 없습니다)`);
+      if (!isConfirmed) return;
+
+      try {
+        const result = await postToSheet({
+          action: 'delete',
+          rowIndex: rowIndex
+        });
+
+        if (result.success) {
+          alert('삭제되었습니다.');
+          closeModal();
+          loadRecords(); // 명부 새로고침
+        } else {
+          alert('삭제 실패: ' + (result.error || '알 수 없는 오류'));
+        }
+      } catch (e) {
+        alert('삭제 통신 오류: ' + e.toString());
+      }
+    }
+
     async function loadSummary() {
       const container = document.getElementById('summaryContainer');
       container.innerHTML = '불러오는 중...';
@@ -598,9 +652,7 @@
       }
     }
 
-    // 정산 항목 클릭 시 명부 탭으로 전환하며 필터링 실행
     function filterFromSummary(targetName) {
-      // 괄호나 공백 등 매칭 정규화
       let filterKey = targetName;
       if (targetName.includes('김환진')) filterKey = '김환진';
       else if (targetName.includes('송아영')) filterKey = '송아영';
