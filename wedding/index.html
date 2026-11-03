@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>축의금 접수 & 명부 관리 시스템</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-muted: #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Pretendard", sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 60px; }
+    header { background: #fff; border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    .header-title { font-size: 1.1rem; font-weight: 700; }
+    .mode-badge { font-size: 0.8rem; padding: 4px 8px; border-radius: 6px; background: #e0f2fe; color: #0369a1; font-weight: 600; cursor: pointer; }
+    
+    /* 네비게이션 탭 */
+    .nav-tabs { display: flex; background: #fff; border-bottom: 1px solid var(--border); }
+    .nav-tab { flex: 1; text-align: center; padding: 12px; font-weight: 600; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; }
+    .nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 16px; }
+    .device-mobile .container { max-width: 480px; }
+
+    /* 카드 스타일 */
+    .card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 6px; }
+    .form-control { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; }
+    
+    /* 프리셋 버튼 그리드 */
+    .preset-section { margin-bottom: 12px; }
+    .preset-title { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
+    .preset-btn-group { display: flex; flex-wrap: wrap; gap: 6px; }
+    .btn-preset { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: #f1f5f9; font-size: 0.85rem; cursor: pointer; font-weight: 500; }
+    .btn-preset:hover, .btn-preset.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    /* 금액 조절 컨트롤 */
+    .amount-box { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .amount-display { font-size: 1.3rem; font-weight: 800; min-width: 90px; text-align: right; color: var(--primary); }
+    .btn-unit { padding: 8px 12px; border: 1px solid var(--border); background: #fff; border-radius: 6px; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
+    .btn-unit:active { background: #e2e8f0; }
+
+    /* 제출 버튼 */
+    .btn-submit { width: 100%; padding: 14px; background: var(--primary); color: #fff; font-size: 1.05rem; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+    .btn-submit:hover { background: var(--primary-hover); }
+
+    /* 명부 테이블/리스트 */
+    .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .sort-btn { padding: 6px 10px; border: 1px solid var(--border); background: #fff; border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-weight: 600; }
+    .record-card { padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; background: #fff; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .record-card:hover { border-color: var(--primary); background: #faf5ff; }
+    .record-name { font-weight: 700; font-size: 1rem; }
+    .record-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+    .record-amount { font-size: 1.1rem; font-weight: 800; color: #047857; }
+
+    /* 모달 팝업 */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 200; padding: 16px; }
+    .modal { background: #fff; border-radius: 12px; padding: 20px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
+    
+    /* 모드 선택 스크린 */
+    #mode-selector { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; z-index: 300; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; }
+    .mode-choice-btn { width: 220px; padding: 18px; font-size: 1.1rem; font-weight: 700; border: 2px solid var(--border); border-radius: 12px; background: #fff; cursor: pointer; }
+    .mode-choice-btn:hover { border-color: var(--primary); background: #eff6ff; }
+  </style>
+</head>
+<body class="device-mobile">
+
+  <!-- 시작 시 모드 선택 모달 -->
+  <div id="mode-selector">
+    <h2 style="margin-bottom: 10px;">사용 환경을 선택해 주세요</h2>
+    <button class="mode-choice-btn" onclick="selectDeviceMode('mobile')">📱 스마트폰 모드</button>
+    <button class="mode-choice-btn" onclick="selectDeviceMode('pc')">💻 PC 모드</button>
+  </div>
+
+  <header>
+    <div class="header-title">축의금 접수 데스크</div>
+    <div class="mode-badge" onclick="toggleDeviceMode()" id="currentModeBadge">모드 전환: 📱 모바일</div>
+  </header>
+
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="switchTab('register')">✍️ 축의금 등록</div>
+    <div class="nav-tab" onclick="switchTab('list')">📋 명부 조회/수정</div>
+    <div class="nav-tab" onclick="switchTab('summary')">📊 정산 요약</div>
+  </div>
+
+  <div class="container">
+    <!-- 탭 1: 축의금 등록 -->
+    <div id="tab-register">
+      <div class="card">
+        <div class="form-group">
+          <label class="form-label">일자</label>
+          <input type="date" id="inputDate" class="form-control" value="2026-11-22">
+        </div>
+
+        <!-- 소속 프리셋 (김환진 -> 송아영 -> 조형숙 -> 송남수 -> 곽형순 순) -->
+        <div class="form-group">
+          <label class="form-label">소속 선택 (클릭 시 자동 설정)</label>
+          <div class="preset-section">
+            <div class="preset-title">김환진 측</div>
+            <div class="preset-btn-group">
+              <button type="button" class="btn-preset" onclick="applyPreset('충남예술고', '김환진')">충남예술고</button>
+              <button type="button" class="btn-preset" onclick="applyPreset('목원대', '김환진')">목원대</button>
+              <button type="button" class="btn-preset" onclick="applyPreset('김환진 친구', '김환진')">김환진 친구</button>
+              <button type="button" class="btn-preset" onclick="applyPreset('대전시립연정국악원', '김환진')">대전시립연정국악원</button>
+            </div>
+          </div>
+
+          <div class="preset-section">
+            <div class="preset-title">송아영 측</div>
+            <div class="preset-btn-group">
+              <button type="button" class="btn-preset" onclick="applyPreset('송아영 직장', '송아영')">송아영 직장</button>
+              <button type="button" class="btn-preset" onclick="applyPreset('송아영 친구', '송아영')">송아영 친구</button>
+            </div>
+          </div>
+
+          <div class="preset-section">
+            <div class="preset-title">조형숙 측</div>
+            <div class="preset-btn-group">
+              <button type="button" class="btn-preset" onclick="applyPreset('무주', '조형숙')">무주</button>
+              <button type="button" class="btn-preset" onclick="applyPreset('산청', '조형숙')">산청</button>
+            </div>
+          </div>
+
+          <div class="preset-section">
+            <div class="preset-title">직계 혼주 측</div>
+            <div class="preset-btn-group">
+              <button type="button" class="btn-preset" onclick="applyPreset('친척/지인', '송남수')">송남수</button>
+              <button type="button" class="btn-preset" onclick="applyPreset('친척/지인', '곽형순')">곽형순</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">소속 (직접 수정/입력 가능)</label>
+          <input type="text" id="inputAffiliation" class="form-control" placeholder="예: 목원대, 직장동료">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">성명 (필수)</label>
+          <input type="text" id="inputName" class="form-control" placeholder="하객 성함">
+        </div>
+
+        <!-- 금액 설정 (+5, -5, +1, -1 단위 증감) -->
+        <div class="form-group">
+          <label class="form-label">금액 (만원 단위)</label>
+          <div class="amount-box">
+            <div class="amount-display"><span id="amountDisplay">5</span>만원</div>
+            <button type="button" class="btn-unit" onclick="changeAmount(5)">+5</button>
+            <button type="button" class="btn-unit" onclick="changeAmount(-5)">-5</button>
+            <button type="button" class="btn-unit" onclick="changeAmount(1)">+1</button>
+            <button type="button" class="btn-unit" onclick="changeAmount(-1)">-1</button>
+          </div>
+          <input type="number" id="inputAmount" class="form-control" style="margin-top: 8px;" value="5" oninput="syncAmount(this.value)" placeholder="직접 입력">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">비고(1) - 귀속 대상자</label>
+          <select id="selectTarget" class="form-control">
+            <option value="김환진">김환진</option>
+            <option value="송아영">송아영</option>
+            <option value="조형숙">조형숙</option>
+            <option value="송남수">송남수</option>
+            <option value="곽형순">곽형순</option>
+            <option value="직접입력">기타 (직접입력)</option>
+          </select>
+          <input type="text" id="inputTargetCustom" class="form-control" placeholder="대상자 직접 입력" style="display:none; margin-top:6px;">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">비고2 (동명이인 구분 / 특이사항)</label>
+          <input type="text" id="inputNote2" class="form-control" placeholder="예: 동명이인 구분 메모, 화환 등">
+        </div>
+
+        <button type="button" class="btn-submit" onclick="submitRecord()">기록 추가하기</button>
+      </div>
+    </div>
+
+    <!-- 탭 2: 명부 조회 및 수정 -->
+    <div id="tab-list" style="display:none;">
+      <div class="list-header">
+        <div style="font-weight:700;">전체 명부 (<span id="recordCount">0</span>건)</div>
+        <button class="sort-btn" onclick="toggleSort()" id="sortToggleBtn">⬇️ 최신순 정렬 중</button>
+      </div>
+      <div id="recordListContainer">불러오는 중...</div>
+    </div>
+
+    <!-- 탭 3: 정산 요약 -->
+    <div id="tab-summary" style="display:none;">
+      <div class="card">
+        <h3 style="margin-bottom: 16px;">📊 대상자별 정산 현황</h3>
+        <div id="summaryContainer">정산 내역을 불러오는 중...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 행 수정용 모달 -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <h3 style="margin-bottom: 14px;">명부 항목 수정</h3>
+      <input type="hidden" id="editRowIndex">
+      <div class="form-group">
+        <label class="form-label">일자</label>
+        <input type="date" id="editDate" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">소속</label>
+        <input type="text" id="editAffiliation" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">성명</label>
+        <input type="text" id="editName" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">금액 (만원)</label>
+        <input type="number" id="editAmount" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">비고(1) 대상</label>
+        <input type="text" id="editTarget" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">비고2 (메모)</label>
+        <input type="text" id="editNote2" class="form-control">
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 16px;">
+        <button class="btn-submit" style="background:#64748b;" onclick="closeModal()">취소</button>
+        <button class="btn-submit" onclick="submitEdit()">수정 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 본인의 Apps Script 웹 앱 배포 URL을 입력하세요.
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyo7yBSyzol5y2C72lr8ILiXO38-RoPrrg9TvSi803YCKzR8tt_FA6rQaso_Y2w78aBcA/exec";
+
+    let currentRecords = [];
+    let isDescending = true; // 기본 최신순
+
+    function selectDeviceMode(mode) {
+      document.body.className = mode === 'mobile' ? 'device-mobile' : 'device-pc';
+      document.getElementById('currentModeBadge').innerText = mode === 'mobile' ? '모드 전환: 📱 모바일' : '모드 전환: 💻 PC';
+      document.getElementById('mode-selector').style.display = 'none';
+    }
+
+    function toggleDeviceMode() {
+      const isMobile = document.body.classList.contains('device-mobile');
+      selectDeviceMode(isMobile ? 'pc' : 'mobile');
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('tab-register').style.display = tabId === 'register' ? 'block' : 'none';
+      document.getElementById('tab-list').style.display = tabId === 'list' ? 'block' : 'none';
+      document.getElementById('tab-summary').style.display = tabId === 'summary' ? 'block' : 'none';
+
+      if (tabId === 'list') loadRecords();
+      if (tabId === 'summary') loadSummary();
+    }
+
+    function applyPreset(affiliation, target) {
+      document.getElementById('inputAffiliation').value = affiliation;
+      const targetSelect = document.getElementById('selectTarget');
+      targetSelect.value = target;
+      document.getElementById('inputTargetCustom').style.display = 'none';
+    }
+
+    document.getElementById('selectTarget').addEventListener('change', function() {
+      document.getElementById('inputTargetCustom').style.display = this.value === '직접입력' ? 'block' : 'none';
+    });
+
+    let currentAmount = 5;
+    function changeAmount(val) {
+      currentAmount = Math.max(0, currentAmount + val);
+      document.getElementById('amountDisplay').innerText = currentAmount;
+      document.getElementById('inputAmount').value = currentAmount;
+    }
+    function syncAmount(val) {
+      currentAmount = parseInt(val, 10) || 0;
+      document.getElementById('amountDisplay').innerText = currentAmount;
+    }
+
+    async function submitRecord() {
+      const name = document.getElementById('inputName').value.trim();
+      if (!name) return alert('성명을 입력해 주세요.');
+
+      let target = document.getElementById('selectTarget').value;
+      if (target === '직접입력') {
+        target = document.getElementById('inputTargetCustom').value.trim();
+      }
+
+      const payload = {
+        action: 'create',
+        date: document.getElementById('inputDate').value,
+        affiliation: document.getElementById('inputAffiliation').value,
+        name: name,
+        amount: currentAmount,
+        target: target,
+        note2: document.getElementById('inputNote2').value
+      };
+
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (result.success) {
+          alert('등록되었습니다!');
+          document.getElementById('inputName').value = '';
+          document.getElementById('inputNote2').value = '';
+        }
+      } catch (e) {
+        alert('등록 실패: ' + e.toString());
+      }
+    }
+
+    async function loadRecords() {
+      const container = document.getElementById('recordListContainer');
+      container.innerHTML = '불러오는 중...';
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=getList`);
+        const result = await res.json();
+        if (result.success) {
+          currentRecords = result.list;
+          document.getElementById('recordCount').innerText = currentRecords.length;
+          renderRecords();
+        }
+      } catch (e) {
+        container.innerHTML = '명부를 불러오지 못했습니다.';
+      }
+    }
+
+    function toggleSort() {
+      isDescending = !isDescending;
+      document.getElementById('sortToggleBtn').innerText = isDescending ? '⬇️ 최신순 정렬 중' : '⬆️ 등록순 정렬 중';
+      renderRecords();
+    }
+
+    function renderRecords() {
+      const container = document.getElementById('recordListContainer');
+      if (currentRecords.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:30px; color:#94a3b8;">내역이 없습니다.</div>';
+        return;
+      }
+
+      const sorted = [...currentRecords];
+      if (isDescending) sorted.reverse();
+
+      container.innerHTML = sorted.map(r => `
+        <div class="record-card" onclick="openEditModal(${r.rowIndex})">
+          <div>
+            <div class="record-name">${r.name} <span style="font-weight:normal; font-size:0.85rem; color:#64748b;">(${r.affiliation || '소속 미기재'})</span></div>
+            <div class="record-sub">귀속: ${r.target || '-'} | ${r.note2 ? '비고: ' + r.note2 + ' | ' : ''}${r.date}</div>
+          </div>
+          <div class="record-amount">${r.amount}만원</div>
+        </div>
+      `).join('');
+    }
+
+    function openEditModal(rowIndex) {
+      const item = currentRecords.find(r => r.rowIndex === rowIndex);
+      if (!item) return;
+
+      document.getElementById('editRowIndex').value = item.rowIndex;
+      document.getElementById('editDate').value = item.date;
+      document.getElementById('editAffiliation').value = item.affiliation;
+      document.getElementById('editName').value = item.name;
+      document.getElementById('editAmount').value = item.amount;
+      document.getElementById('editTarget').value = item.target;
+      document.getElementById('editNote2').value = item.note2;
+
+      document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('editModal').style.display = 'none';
+    }
+
+    async function submitEdit() {
+      const payload = {
+        action: 'update',
+        rowIndex: document.getElementById('editRowIndex').value,
+        date: document.getElementById('editDate').value,
+        affiliation: document.getElementById('editAffiliation').value,
+        name: document.getElementById('editName').value,
+        amount: document.getElementById('editAmount').value,
+        target: document.getElementById('editTarget').value,
+        note2: document.getElementById('editNote2').value
+      };
+
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (result.success) {
+          alert('수정되었습니다.');
+          closeModal();
+          loadRecords();
+        }
+      } catch (e) {
+        alert('수정 실패: ' + e.toString());
+      }
+    }
+
+    async function loadSummary() {
+      const container = document.getElementById('summaryContainer');
+      container.innerHTML = '불러오는 중...';
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=getSummary`);
+        const result = await res.json();
+        if (result.success && result.summary.length > 0) {
+          container.innerHTML = result.summary.map(s => `
+            <div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f1f5f9;">
+              <span style="font-weight:600;">${s.name}</span>
+              <span style="font-weight:800; color:var(--primary);">${Number(s.amount).toLocaleString()} 만원</span>
+            </div>
+          `).join('');
+        } else {
+          container.innerHTML = '정산 요약 데이터를 불러올 수 없습니다.';
+        }
+      } catch (e) {
+        container.innerHTML = '요약 조회 실패';
+      }
+    }
+  </script>
+</body>
+</html>
