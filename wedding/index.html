@@ -14,8 +14,8 @@
       --border: #e2e8f0;
       --text: #1e293b;
       --text-muted: #64748b;
-      --stock-red: #ef4444;    /* 상승: 빨간색 */
-      --stock-blue: #2563eb;   /* 하락: 파란색 */
+      --stock-red: #ef4444;
+      --stock-blue: #2563eb;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Pretendard", sans-serif; }
     body { background-color: var(--bg); color: var(--text); padding-bottom: 60px; }
@@ -60,13 +60,23 @@
     .btn-submit:hover { background: var(--primary-hover); }
     .btn-submit:disabled { background: #94a3b8; cursor: not-allowed; }
 
-    .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    /* 필터 칩 스타일 */
+    .filter-wrapper { margin-bottom: 14px; overflow-x: auto; white-space: nowrap; padding-bottom: 4px; }
+    .filter-btn-group { display: inline-flex; gap: 6px; }
+    .btn-filter { padding: 6px 12px; border: 1px solid var(--border); border-radius: 20px; background: #fff; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--text-muted); }
+    .btn-filter.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: 700; }
+
+    .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .sort-btn { padding: 6px 10px; border: 1px solid var(--border); background: #fff; border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-weight: 600; }
     .record-card { padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; background: #fff; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
     .record-card:hover { border-color: var(--primary); background: #faf5ff; }
     .record-name { font-weight: 700; font-size: 1rem; }
     .record-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
     .record-amount { font-size: 1.1rem; font-weight: 800; color: #047857; }
+
+    /* 정산 리스트 클릭 가능 스타일 */
+    .summary-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; border-radius: 8px; }
+    .summary-item:hover { background-color: #f8fafc; }
 
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 200; padding: 16px; }
     .modal { background: #fff; border-radius: 12px; padding: 20px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
@@ -91,9 +101,9 @@
   </header>
 
   <div class="nav-tabs">
-    <div class="nav-tab active" onclick="switchTab('register', event)">✍️ 축의금 등록</div>
-    <div class="nav-tab" onclick="switchTab('list', event)">📋 명부 조회/수정</div>
-    <div class="nav-tab" onclick="switchTab('summary', event)">📊 정산 요약</div>
+    <div class="nav-tab active" id="tabNav-register" onclick="switchTab('register')">✍️ 축의금 등록</div>
+    <div class="nav-tab" id="tabNav-list" onclick="switchTab('list')">📋 명부 조회/수정</div>
+    <div class="nav-tab" id="tabNav-summary" onclick="switchTab('summary')">📊 정산 요약</div>
   </div>
 
   <div class="container">
@@ -123,7 +133,6 @@
             </div>
           </div>
 
-          <!-- 신랑 측 혼주 (부: 故 김현돈 / 모: 조형숙) -->
           <div class="preset-section">
             <div class="preset-title">🏡 신랑 측 혼주 (부: 故 김현돈 / 모: 조형숙)</div>
             <div class="preset-btn-group">
@@ -151,7 +160,6 @@
           </div>
         </div>
 
-        <!-- 소속 (필수) -->
         <div class="form-group">
           <div class="label-wrapper">
             <label class="form-label">소속 (필수)</label>
@@ -160,7 +168,6 @@
           <input type="text" id="inputAffiliation" class="form-control" placeholder="즐겨찾기 선택 또는 직접 입력" oninput="onAffiliationInput(this.value)">
         </div>
 
-        <!-- 성명 (필수) -->
         <div class="form-group">
           <div class="label-wrapper">
             <label class="form-label">성명 (필수)</label>
@@ -169,7 +176,6 @@
           <input type="text" id="inputName" class="form-control" placeholder="하객 성함" oninput="validateField('Name', this.value)">
         </div>
 
-        <!-- 금액 (필수) -->
         <div class="form-group">
           <div class="label-wrapper">
             <label class="form-label">금액 (필수 - 만원 단위)</label>
@@ -185,7 +191,6 @@
           <input type="number" id="inputAmount" class="form-control is-filled" style="margin-top: 8px;" value="5" oninput="syncAmount(this.value)" placeholder="직접 입력">
         </div>
 
-        <!-- 비고(1) - 귀속 대상자 -->
         <div class="form-group">
           <div class="label-wrapper">
             <label class="form-label">비고(1) - 귀속 대상자 (선택)</label>
@@ -203,7 +208,6 @@
           <input type="text" id="inputTargetCustom" class="form-control" placeholder="대상자 직접 입력" style="display:none; margin-top:6px;">
         </div>
 
-        <!-- 비고2 - 선택 -->
         <div class="form-group">
           <div class="label-wrapper">
             <label class="form-label">비고2 (동명이인 구분 / 메모 - 선택)</label>
@@ -217,8 +221,23 @@
 
     <!-- 탭 2: 명부 조회 및 수정 -->
     <div id="tab-list" style="display:none;">
+      <!-- 대상자 필터 칩 영역 -->
+      <div class="filter-wrapper">
+        <div class="filter-btn-group" id="filterButtonGroup">
+          <button type="button" class="btn-filter active" onclick="setTargetFilter('')">전체보기</button>
+          <button type="button" class="btn-filter" onclick="setTargetFilter('김환진')">김환진</button>
+          <button type="button" class="btn-filter" onclick="setTargetFilter('송아영')">송아영</button>
+          <button type="button" class="btn-filter" onclick="setTargetFilter('조형숙')">조형숙</button>
+          <button type="button" class="btn-filter" onclick="setTargetFilter('故 김현돈')">故 김현돈</button>
+          <button type="button" class="btn-filter" onclick="setTargetFilter('송남수(영복)')">송남수(영복)</button>
+          <button type="button" class="btn-filter" onclick="setTargetFilter('곽형순')">곽형순</button>
+        </div>
+      </div>
+
       <div class="list-header">
-        <div style="font-weight:700;">전체 명부 (<span id="recordCount">0</span>건)</div>
+        <div style="font-weight:700;">
+          <span id="filterLabelTitle">전체</span> (<span id="recordCount">0</span>건 / <span id="recordSum">0</span>만원)
+        </div>
         <button class="sort-btn" onclick="toggleSort()" id="sortToggleBtn">⬇️ 최신순 정렬 중</button>
       </div>
       <div id="recordListContainer">불러오는 중...</div>
@@ -227,7 +246,8 @@
     <!-- 탭 3: 정산 요약 -->
     <div id="tab-summary" style="display:none;">
       <div class="card">
-        <h3 style="margin-bottom: 16px;">📊 대상자별 정산 현황</h3>
+        <h3 style="margin-bottom: 6px;">📊 대상자별 정산 현황</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">이름을 클릭하면 해당 대상자의 상세 명부로 이동합니다.</p>
         <div id="summaryContainer">정산 내역을 불러오는 중...</div>
       </div>
     </div>
@@ -270,12 +290,12 @@
   </div>
 
   <script>
-    // 본인의 배포된 구글 웹앱 URL을 입력하세요.
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyo7yBSyzol5y2C72lr8ILiXO38-RoPrrg9TvSi803YCKzR8tt_FA6rQaso_Y2w78aBcA/exec";
 
     let currentRecords = [];
     let isDescending = true;
     let currentAmount = 5;
+    let selectedFilterTarget = ''; // 현재 선택된 대상자 필터 (빈 문자열은 전체)
 
     function selectDeviceMode(mode) {
       document.body.className = mode === 'mobile' ? 'device-mobile' : 'device-pc';
@@ -288,9 +308,11 @@
       selectDeviceMode(isMobile ? 'pc' : 'mobile');
     }
 
-    function switchTab(tabId, evt) {
+    function switchTab(tabId) {
       document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-      if (evt && evt.target) evt.target.classList.add('active');
+      const activeNav = document.getElementById('tabNav-' + tabId);
+      if (activeNav) activeNav.classList.add('active');
+
       document.getElementById('tab-register').style.display = tabId === 'register' ? 'block' : 'none';
       document.getElementById('tab-list').style.display = tabId === 'list' ? 'block' : 'none';
       document.getElementById('tab-summary').style.display = tabId === 'summary' ? 'block' : 'none';
@@ -439,12 +461,27 @@
         const result = await res.json();
         if (result.success) {
           currentRecords = result.list;
-          document.getElementById('recordCount').innerText = currentRecords.length;
           renderRecords();
         }
       } catch (e) {
         container.innerHTML = '명부를 불러오지 못했습니다.';
       }
+    }
+
+    // 대상자 필터 변경
+    function setTargetFilter(targetName) {
+      selectedFilterTarget = targetName;
+      
+      // 필터 버튼 활성화 스타일 업데이트
+      document.querySelectorAll('#filterButtonGroup .btn-filter').forEach(btn => {
+        if ((targetName === '' && btn.innerText === '전체보기') || btn.innerText === targetName) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      renderRecords();
     }
 
     function toggleSort() {
@@ -457,17 +494,38 @@
       const container = document.getElementById('recordListContainer');
       if (currentRecords.length === 0) {
         container.innerHTML = '<div style="text-align:center; padding:30px; color:#94a3b8;">등록된 내역이 없습니다.</div>';
+        document.getElementById('recordCount').innerText = '0';
+        document.getElementById('recordSum').innerText = '0';
         return;
       }
 
-      const sorted = [...currentRecords];
+      // 대상자 필터링 적용
+      let filtered = currentRecords;
+      if (selectedFilterTarget !== '') {
+        filtered = currentRecords.filter(r => (r.target || '').includes(selectedFilterTarget));
+        document.getElementById('filterLabelTitle').innerText = selectedFilterTarget;
+      } else {
+        document.getElementById('filterLabelTitle').innerText = '전체';
+      }
+
+      // 건수 및 합계 금액 계산
+      const totalAmount = filtered.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
+      document.getElementById('recordCount').innerText = filtered.length;
+      document.getElementById('recordSum').innerText = totalAmount.toLocaleString();
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:30px; color:#94a3b8;">'${selectedFilterTarget}' 대상의 축의 내역이 없습니다.</div>`;
+        return;
+      }
+
+      const sorted = [...filtered];
       if (isDescending) sorted.reverse();
 
       container.innerHTML = sorted.map(r => `
         <div class="record-card" onclick="openEditModal(${r.rowIndex})">
           <div>
             <div class="record-name">${r.name} <span style="font-weight:normal; font-size:0.85rem; color:#64748b;">(${r.affiliation || '소속 없음'})</span></div>
-            <div class="record-sub">귀속: ${r.target || '-'} | ${r.note2 ? '비고: ' + r.note2 + ' | ' : ''}${r.date}</div>
+            <div class="record-sub">귀속: <b>${r.target || '-'}</b> | ${r.note2 ? '비고: ' + r.note2 + ' | ' : ''}${r.date}</div>
           </div>
           <div class="record-amount">${r.amount}만원</div>
         </div>
@@ -527,9 +585,9 @@
         const result = await res.json();
         if (result.success && result.summary.length > 0) {
           container.innerHTML = result.summary.map(s => `
-            <div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f1f5f9;">
-              <span style="font-weight:600;">${s.name}</span>
-              <span style="font-weight:800; color:var(--primary);">${Number(s.amount).toLocaleString()} 만원</span>
+            <div class="summary-item" onclick="filterFromSummary('${s.name}')">
+              <span style="font-weight:700;">${s.name} <span style="font-size:0.8rem; font-weight:normal; color:#64748b;">(상세보기 ❯)</span></span>
+              <span style="font-weight:800; color:var(--primary); font-size:1.05rem;">${Number(s.amount).toLocaleString()} 만원</span>
             </div>
           `).join('');
         } else {
@@ -538,6 +596,21 @@
       } catch (e) {
         container.innerHTML = '요약 조회 실패';
       }
+    }
+
+    // 정산 항목 클릭 시 명부 탭으로 전환하며 필터링 실행
+    function filterFromSummary(targetName) {
+      // 괄호나 공백 등 매칭 정규화
+      let filterKey = targetName;
+      if (targetName.includes('김환진')) filterKey = '김환진';
+      else if (targetName.includes('송아영')) filterKey = '송아영';
+      else if (targetName.includes('조형숙')) filterKey = '조형숙';
+      else if (targetName.includes('김현돈')) filterKey = '故 김현돈';
+      else if (targetName.includes('송남수')) filterKey = '송남수(영복)';
+      else if (targetName.includes('곽형순')) filterKey = '곽형순';
+
+      switchTab('list');
+      setTargetFilter(filterKey);
     }
   </script>
 </body>
