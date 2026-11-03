@@ -8,13 +8,14 @@
     :root {
       --primary: #2563eb;
       --primary-hover: #1d4ed8;
+      --success: #10b981;
       --bg: #f8fafc;
       --card-bg: #ffffff;
       --border: #e2e8f0;
       --text: #1e293b;
       --text-muted: #64748b;
-      --stock-red: #ef4444;    /* 상승/증가: 빨간색 */
-      --stock-blue: #2563eb;   /* 하락/감소: 파란색 */
+      --stock-red: #ef4444;    /* 상승: 빨간색 */
+      --stock-blue: #2563eb;   /* 하락: 파란색 */
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Pretendard", sans-serif; }
     body { background-color: var(--bg); color: var(--text); padding-bottom: 60px; }
@@ -30,26 +31,32 @@
     .device-mobile .container { max-width: 480px; }
 
     .card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 6px; }
-    .form-control { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; }
+    .form-group { margin-bottom: 18px; }
+    
+    .label-wrapper { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .form-label { font-size: 0.9rem; font-weight: 700; }
+    .check-badge { font-size: 0.75rem; color: #fff; background-color: var(--success); padding: 2px 7px; border-radius: 10px; font-weight: 700; display: none; transition: all 0.2s; }
+    .check-badge.active { display: inline-block; }
+
+    .form-control { width: 100%; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 1rem; transition: border-color 0.2s, background-color 0.2s; }
+    .form-control:focus { outline: none; border-color: var(--primary); }
+    .form-control.is-filled { border-color: var(--success); background-color: #f0fdf4; }
     
     .preset-section { margin-bottom: 12px; }
     .preset-title { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; }
     .preset-btn-group { display: flex; flex-wrap: wrap; gap: 6px; }
-    .btn-preset { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: #f1f5f9; font-size: 0.85rem; cursor: pointer; font-weight: 500; }
-    .btn-preset:hover, .btn-preset.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .btn-preset { padding: 7px 12px; border: 1px solid var(--border); border-radius: 6px; background: #f1f5f9; font-size: 0.85rem; cursor: pointer; font-weight: 600; color: #334155; transition: all 0.15s ease; }
+    .btn-preset:hover { background: #e2e8f0; }
+    .btn-preset.selected { background-color: var(--primary) !important; color: #ffffff !important; border-color: var(--primary) !important; box-shadow: 0 2px 4px rgba(37,99,235,0.3); }
 
-    /* 금액 조절 컨트롤 및 주식 색상 버튼 */
     .amount-box { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
-    .amount-display { font-size: 1.3rem; font-weight: 800; min-width: 90px; text-align: right; color: var(--primary); }
-    .btn-unit { padding: 8px 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; color: #fff; }
+    .amount-display { font-size: 1.35rem; font-weight: 800; min-width: 95px; text-align: right; color: var(--primary); }
+    .btn-unit { padding: 9px 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; color: #fff; transition: opacity 0.15s; }
+    .btn-unit:active { opacity: 0.8; }
     .btn-plus { background-color: var(--stock-red); }
-    .btn-plus:active { background-color: #dc2626; }
     .btn-minus { background-color: var(--stock-blue); }
-    .btn-minus:active { background-color: #1d4ed8; }
 
-    .btn-submit { width: 100%; padding: 14px; background: var(--primary); color: #fff; font-size: 1.05rem; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+    .btn-submit { width: 100%; padding: 15px; background: var(--primary); color: #fff; font-size: 1.05rem; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: background-color 0.2s; }
     .btn-submit:hover { background: var(--primary-hover); }
     .btn-submit:disabled { background: #94a3b8; cursor: not-allowed; }
 
@@ -94,63 +101,80 @@
     <div id="tab-register">
       <div class="card">
         <div class="form-group">
-          <label class="form-label">일자</label>
-          <input type="date" id="inputDate" class="form-control" value="2026-11-22">
+          <div class="label-wrapper">
+            <label class="form-label">일자</label>
+          </div>
+          <input type="date" id="inputDate" class="form-control is-filled" value="2026-11-22">
         </div>
 
-        <!-- 소속 프리셋 (신랑측 / 신부측 / 혼주 구분) -->
+        <!-- 즐겨찾기 버튼 영역 -->
         <div class="form-group">
-          <label class="form-label">소속 선택 (클릭 시 소속 및 귀속 대상 자동 설정)</label>
+          <div class="label-wrapper">
+            <label class="form-label">⭐ 즐겨찾기 (원터치 선택)</label>
+          </div>
           
           <div class="preset-section">
             <div class="preset-title">👔 신랑 측 (신랑: 김환진)</div>
             <div class="preset-btn-group">
-              <button type="button" class="btn-preset" onclick="applyPreset('충남예술고', '김환진')">충남예술고</button>
-              <button type="button" class="btn-preset" onclick="applyPreset('목원대', '김환진')">목원대</button>
-              <button type="button" class="btn-preset" onclick="applyPreset('김환진 친구', '김환진')">김환진 친구</button>
-              <button type="button" class="btn-preset" onclick="applyPreset('대전시립연정국악원', '김환진')">대전시립연정국악원</button>
+              <button type="button" class="btn-preset" onclick="handlePresetClick(this, '충남예술고', '김환진')">충남예술고</button>
+              <button type="button" class="btn-preset" onclick="handlePresetClick(this, '목원대', '김환진')">목원대</button>
+              <button type="button" class="btn-preset" onclick="handlePresetClick(this, '김환진 친구', '김환진')">김환진 친구</button>
+              <button type="button" class="btn-preset" onclick="handlePresetClick(this, '대전시립연정국악원', '김환진')">대전시립연정국악원</button>
             </div>
           </div>
 
+          <!-- 신랑 측 혼주 (부: 故 김현돈 / 모: 조형숙) -->
           <div class="preset-section">
-            <div class="preset-title">🏡 신랑 측 혼주 (모: 조형숙)</div>
+            <div class="preset-title">🏡 신랑 측 혼주 (부: 故 김현돈 / 모: 조형숙)</div>
             <div class="preset-btn-group">
-              <button type="button" class="btn-preset" onclick="applyPreset('무주', '조형숙')">무주</button>
-              <button type="button" class="btn-preset" onclick="applyPreset('산청', '조형숙')">산청</button>
-              <button type="button" class="btn-preset" onclick="applyPreset('친척/지인', '조형숙')">조형숙 친척/지인</button>
+              <button type="button" class="btn-preset" onclick="handlePresetClick(this, '무주', '조형숙')">무주</button>
+              <button type="button" class="btn-preset" onclick="handlePresetClick(this, '산청', '조형숙')">산청</button>
+              <button type="button" class="btn-preset" onclick="handlePresetClick(this, '친척/지인', '조형숙')">조형숙 친척/지인</button>
+              <button type="button" class="btn-preset" onclick="handlePresetClick(this, '친척/지인', '故 김현돈')">故 김현돈 (부)</button>
             </div>
           </div>
 
           <div class="preset-section">
             <div class="preset-title">👰 신부 측 (신부: 송아영)</div>
             <div class="preset-btn-group">
-              <button type="button" class="btn-preset" onclick="applyPreset('송아영 직장', '송아영')">송아영 직장</button>
-              <button type="button" class="btn-preset" onclick="applyPreset('송아영 친구', '송아영')">송아영 친구</button>
+              <button type="button" class="btn-preset" onclick="handlePresetClick(this, '송아영 직장', '송아영')">송아영 직장</button>
+              <button type="button" class="btn-preset" onclick="handlePresetClick(this, '송아영 친구', '송아영')">송아영 친구</button>
             </div>
           </div>
 
           <div class="preset-section">
             <div class="preset-title">💐 신부 측 혼주 (부: 송남수(영복) / 모: 곽형순)</div>
             <div class="preset-btn-group">
-              <button type="button" class="btn-preset" onclick="applyPreset('친척/지인', '송남수(영복)')">송남수(영복)</button>
-              <button type="button" class="btn-preset" onclick="applyPreset('친척/지인', '곽형순')">곽형순</button>
+              <button type="button" class="btn-preset" onclick="handlePresetClick(this, '친척/지인', '송남수(영복)')">송남수(영복)</button>
+              <button type="button" class="btn-preset" onclick="handlePresetClick(this, '친척/지인', '곽형순')">곽형순</button>
             </div>
           </div>
         </div>
 
+        <!-- 소속 (필수) -->
         <div class="form-group">
-          <label class="form-label">소속 (직접 입력/수정 가능)</label>
-          <input type="text" id="inputAffiliation" class="form-control" placeholder="예: 목원대, 직장동료">
+          <div class="label-wrapper">
+            <label class="form-label">소속 (필수)</label>
+            <span class="check-badge" id="badgeAffiliation">✔ 완료</span>
+          </div>
+          <input type="text" id="inputAffiliation" class="form-control" placeholder="즐겨찾기 선택 또는 직접 입력" oninput="onAffiliationInput(this.value)">
         </div>
 
+        <!-- 성명 (필수) -->
         <div class="form-group">
-          <label class="form-label">성명 (필수)</label>
-          <input type="text" id="inputName" class="form-control" placeholder="하객 성함">
+          <div class="label-wrapper">
+            <label class="form-label">성명 (필수)</label>
+            <span class="check-badge" id="badgeName">✔ 완료</span>
+          </div>
+          <input type="text" id="inputName" class="form-control" placeholder="하객 성함" oninput="validateField('Name', this.value)">
         </div>
 
-        <!-- 금액 조절: + 빨강, - 파랑 -->
+        <!-- 금액 (필수) -->
         <div class="form-group">
-          <label class="form-label">금액 (만원 단위)</label>
+          <div class="label-wrapper">
+            <label class="form-label">금액 (필수 - 만원 단위)</label>
+            <span class="check-badge active" id="badgeAmount">✔ 완료</span>
+          </div>
           <div class="amount-box">
             <div class="amount-display"><span id="amountDisplay">5</span>만원</div>
             <button type="button" class="btn-unit btn-plus" onclick="changeAmount(5)">+5</button>
@@ -158,15 +182,20 @@
             <button type="button" class="btn-unit btn-plus" onclick="changeAmount(1)">+1</button>
             <button type="button" class="btn-unit btn-minus" onclick="changeAmount(-1)">-1</button>
           </div>
-          <input type="number" id="inputAmount" class="form-control" style="margin-top: 8px;" value="5" oninput="syncAmount(this.value)" placeholder="직접 입력">
+          <input type="number" id="inputAmount" class="form-control is-filled" style="margin-top: 8px;" value="5" oninput="syncAmount(this.value)" placeholder="직접 입력">
         </div>
 
+        <!-- 비고(1) - 귀속 대상자 -->
         <div class="form-group">
-          <label class="form-label">비고(1) - 귀속 대상자</label>
+          <div class="label-wrapper">
+            <label class="form-label">비고(1) - 귀속 대상자 (선택)</label>
+          </div>
           <select id="selectTarget" class="form-control">
-            <option value="김환진">김환진 (신랑)</option>
+            <option value="">선택 안 함 (나중에 정리)</option>
+            <option value="김환진" selected>김환진 (신랑)</option>
             <option value="송아영">송아영 (신부)</option>
             <option value="조형숙">조형숙 (신랑 모)</option>
+            <option value="故 김현돈">故 김현돈 (신랑 부)</option>
             <option value="송남수(영복)">송남수(영복) (신부 부)</option>
             <option value="곽형순">곽형순 (신부 모)</option>
             <option value="직접입력">기타 (직접입력)</option>
@@ -174,8 +203,11 @@
           <input type="text" id="inputTargetCustom" class="form-control" placeholder="대상자 직접 입력" style="display:none; margin-top:6px;">
         </div>
 
+        <!-- 비고2 - 선택 -->
         <div class="form-group">
-          <label class="form-label">비고2 (동명이인 구분 / 메모)</label>
+          <div class="label-wrapper">
+            <label class="form-label">비고2 (동명이인 구분 / 메모 - 선택)</label>
+          </div>
           <input type="text" id="inputNote2" class="form-control" placeholder="예: 동명이인 구분 메모, 화환 등">
         </div>
 
@@ -243,6 +275,7 @@
 
     let currentRecords = [];
     let isDescending = true;
+    let currentAmount = 5;
 
     function selectDeviceMode(mode) {
       document.body.className = mode === 'mobile' ? 'device-mobile' : 'device-pc';
@@ -266,29 +299,56 @@
       if (tabId === 'summary') loadSummary();
     }
 
-    function applyPreset(affiliation, target) {
-      document.getElementById('inputAffiliation').value = affiliation;
+    function handlePresetClick(btnElem, affiliation, target) {
+      document.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('selected'));
+      btnElem.classList.add('selected');
+
+      const affInput = document.getElementById('inputAffiliation');
+      affInput.value = affiliation;
+      validateField('Affiliation', affiliation);
+
       const targetSelect = document.getElementById('selectTarget');
       targetSelect.value = target;
       document.getElementById('inputTargetCustom').style.display = 'none';
+    }
+
+    function onAffiliationInput(val) {
+      document.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('selected'));
+      validateField('Affiliation', val);
+    }
+
+    function validateField(field, value) {
+      const badge = document.getElementById('badge' + field);
+      const input = document.getElementById('input' + field);
+      const isValid = value !== undefined && value.toString().trim().length > 0 && (field !== 'Amount' || Number(value) > 0);
+
+      if (isValid) {
+        if (badge) badge.classList.add('active');
+        if (input) input.classList.add('is-filled');
+      } else {
+        if (badge) badge.classList.remove('active');
+        if (input) input.classList.remove('is-filled');
+      }
     }
 
     document.getElementById('selectTarget').addEventListener('change', function() {
       document.getElementById('inputTargetCustom').style.display = this.value === '직접입력' ? 'block' : 'none';
     });
 
-    let currentAmount = 5;
     function changeAmount(val) {
       currentAmount = Math.max(0, currentAmount + val);
       document.getElementById('amountDisplay').innerText = currentAmount;
-      document.getElementById('inputAmount').value = currentAmount;
+      const input = document.getElementById('inputAmount');
+      input.value = currentAmount;
+      validateField('Amount', currentAmount);
     }
+
     function syncAmount(val) {
       currentAmount = parseInt(val, 10) || 0;
       document.getElementById('amountDisplay').innerText = currentAmount;
+      validateField('Amount', currentAmount);
     }
 
-    // CORS 및 Failed to fetch 에러 방지 통신 함수
     async function postToSheet(data) {
       return fetch(SCRIPT_URL, {
         method: 'POST',
@@ -298,8 +358,23 @@
     }
 
     async function submitRecord() {
+      const affiliation = document.getElementById('inputAffiliation').value.trim();
       const name = document.getElementById('inputName').value.trim();
-      if (!name) return alert('성명을 입력해 주세요.');
+
+      if (!affiliation) {
+        alert('소속을 입력하거나 즐겨찾기에서 선택해 주세요.');
+        document.getElementById('inputAffiliation').focus();
+        return;
+      }
+      if (!name) {
+        alert('하객 성명을 입력해 주세요.');
+        document.getElementById('inputName').focus();
+        return;
+      }
+      if (currentAmount <= 0) {
+        alert('금액을 1만원 이상 입력해 주세요.');
+        return;
+      }
 
       let target = document.getElementById('selectTarget').value;
       if (target === '직접입력') {
@@ -309,7 +384,7 @@
       const payload = {
         action: 'create',
         date: document.getElementById('inputDate').value,
-        affiliation: document.getElementById('inputAffiliation').value,
+        affiliation: affiliation,
         name: name,
         amount: currentAmount,
         target: target,
@@ -324,17 +399,36 @@
         const result = await postToSheet(payload);
         if (result.success) {
           alert('등록 완료되었습니다!');
-          document.getElementById('inputName').value = '';
-          document.getElementById('inputNote2').value = '';
+          resetForm();
         } else {
           alert('저장 실패: ' + (result.error || '알 수 없는 오류'));
         }
       } catch (e) {
-        alert('서버 통신 오류 (권한 및 URL 확인 필요): ' + e.toString());
+        alert('서버 통신 오류: ' + e.toString());
       } finally {
         btn.disabled = false;
         btn.innerText = '기록 추가하기';
       }
+    }
+
+    function resetForm() {
+      document.getElementById('inputAffiliation').value = '';
+      document.getElementById('inputName').value = '';
+      document.getElementById('inputNote2').value = '';
+      document.getElementById('inputTargetCustom').value = '';
+
+      document.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('selected'));
+
+      currentAmount = 5;
+      document.getElementById('amountDisplay').innerText = '5';
+      document.getElementById('inputAmount').value = 5;
+
+      document.getElementById('selectTarget').value = '김환진';
+      document.getElementById('inputTargetCustom').style.display = 'none';
+
+      validateField('Affiliation', '');
+      validateField('Name', '');
+      validateField('Amount', 5);
     }
 
     async function loadRecords() {
@@ -349,7 +443,7 @@
           renderRecords();
         }
       } catch (e) {
-        container.innerHTML = '명부를 불러오지 못했습니다. 스크립트 배포 상태를 확인해 주세요.';
+        container.innerHTML = '명부를 불러오지 못했습니다.';
       }
     }
 
